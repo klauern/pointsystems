@@ -1,0 +1,3 @@
+{
+	"id": "pointsystems-zat2",
+}
