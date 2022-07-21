@@ -63,16 +63,6 @@ func createCustomer(ctx context.Context, name string) (int, error) {
 	return id, tx.Commit()
 }
 
-func updateTransaction(ctx context.Context, id int, amount int) error {
-	_, err := sqldb.Exec(ctx, `UPDATE transactions SET amount = $1 WHERE id = $2;`, amount, id)
-	return err
-}
-
-func deleteTransaction(ctx context.Context, id int) error {
-	_, err := sqldb.Exec(ctx, `DELETE FROM transactions WHERE id = $1;`, id)
-	return err
-}
-
 func spendPoints(ctx context.Context, id int, adjustments []*PayerTransaction) error {
 	tx, err := sqldb.Begin(context.Background())
 	if err != nil {
