@@ -4,6 +4,8 @@ import (
 	"context"
 	"sort"
 	"time"
+
+	"encore.dev/rlog"
 )
 
 type PayerTransaction struct {
@@ -75,7 +77,7 @@ func SpendCustomerPoints(ctx context.Context, id int, points int64) (*CustomerTr
 				adjustments = append(adjustments, &PayerTransaction{
 					CustomerID: adj.CustomerID,
 					Payer:      adj.Payer,
-					Points:     -adj.Points,
+					Points:     0,
 					Entered:    adj.Entered,
 				})
 				total += adj.Points
@@ -83,17 +85,22 @@ func SpendCustomerPoints(ctx context.Context, id int, points int64) (*CustomerTr
 				adjustments = append(adjustments, &PayerTransaction{
 					CustomerID: adj.CustomerID,
 					Payer:      adj.Payer,
-					Points:     (total - points),
+					Points:     total - points,
 					Entered:    adj.Entered,
 				})
-				total += (points - total)
+				total += points - total
 			}
 		}
+	}
+	err = spendPoints(ctx, id, adjustments)
+	if err != nil {
+		rlog.Error("unable to spend points on customer", "err", err)
+		return nil, err
 	}
 
 	return &CustomerTransactions{
 		CustomerID:   id,
 		Name:         transactions[0].Payer,
-		Transactions: transactions,
+		Transactions: adjustments,
 	}, nil
 }

@@ -42,7 +42,6 @@ func selectCustomerBalances(ctx context.Context, customer int) ([]*PayerTransact
 		rlog.Info("found row", "row", t)
 		t = append(t, &transaction)
 	}
-	rlog.Debug("transactions", "transactions", t)
 	return t, nil
 }
 
@@ -81,15 +80,18 @@ func spendPoints(ctx context.Context, id int, adjustments []*PayerTransaction) e
 	}
 	for _, adj := range adjustments {
 		if adj.Points == 0 {
-			tx.Exec(ctx, `DELETE FROM transactions WHERE id = $1;`, adj.TransactionID)
+			_, err = tx.Exec(ctx, `DELETE FROM transactions WHERE id = $1;`, adj.TransactionID)
+			if err != nil {
+				rlog.Error("not able to delete row", "transaction_id", adj.TransactionID, "err", err)
+				return err
+			}
 		} else {
 			_, err := tx.Exec(ctx, `UPDATE transactions SET amount = (amount - $1) WHERE id = $2`, adj.Points, adj.TransactionID)
 			if err != nil {
+				rlog.Error("unable to update balance for transaction", "transation_id", adj.TransactionID, "err", err)
 				return err
 			}
 		}
-
 	}
-
-	return nil
+	return tx.Commit()
 }
