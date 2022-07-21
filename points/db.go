@@ -80,7 +80,7 @@ func spendPoints(ctx context.Context, id int, adjustments []*PayerTransaction) e
 		return err
 	}
 	for _, adj := range adjustments {
-		rlog.Info("adjusting", "id", id, "amount", adj.Points, "payer", adj.CustomerID)
+		rlog.Info("adjusting", "id", id, "amount", adj.Points, "transaction_id", adj.TransactionID)
 		if adj.Points == 0 {
 			result, err := tx.Exec(ctx, `DELETE FROM transactions WHERE id = $1;`, adj.TransactionID)
 			if err != nil {
@@ -89,7 +89,7 @@ func spendPoints(ctx context.Context, id int, adjustments []*PayerTransaction) e
 			}
 			rlog.Info("affected rows", "rowcount", result.RowsAffected())
 		} else {
-			result, err := tx.Exec(ctx, `UPDATE transactions SET amount = (amount - $1) WHERE id = $2;`, int(adj.Points), adj.TransactionID)
+			result, err := tx.Exec(ctx, `UPDATE transactions SET amount = (amount - $1) WHERE id = $2;`, adj.Points, adj.TransactionID)
 			if err != nil {
 				rlog.Error("unable to update balance for transaction", "transation_id", adj.TransactionID, "err", err)
 				return err
