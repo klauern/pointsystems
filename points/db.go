@@ -53,14 +53,15 @@ func createCustomer(ctx context.Context, name string) (int, error) {
 	}
 	err = tx.QueryRow(ctx, `INSERT INTO customers (name) VALUES ($1) RETURNING id;`, name).Scan(&id)
 	if err != nil {
-		return id, err
+		rlog.Error("error inserting new customer row", "err", err)
+		return -1, err
+	}
+	if err = tx.Commit(); err != nil {
+		rlog.Error("not able to commit transaction", "err", err)
+		return -1, err
 	}
 
-	_, err = tx.Exec(ctx, `INSERT INTO customer_totals (customer) VALUES ('"$1" => "$2"')`, id, 0)
-	if err != nil {
-		return 0, err
-	}
-	return id, tx.Commit()
+	return id, nil
 }
 
 func spendPoints(ctx context.Context, id int, adjustments []*PayerTransaction) error {
