@@ -71,8 +71,8 @@ func SpendCustomerPoints(ctx context.Context, id int, points int64) (*CustomerTr
 
 	adjustments := make([]*PayerTransaction, 0)
 	total := int64(0)
-	for total < points {
-		for _, adj := range transactions {
+	for _, adj := range transactions {
+		if total < points {
 			if adj.Points <= (points - total) {
 				adjustments = append(adjustments, &PayerTransaction{
 					CustomerID: adj.CustomerID,
@@ -80,17 +80,18 @@ func SpendCustomerPoints(ctx context.Context, id int, points int64) (*CustomerTr
 					Points:     0,
 					Entered:    adj.Entered,
 				})
-				total += adj.Points
 			} else {
 				adjustments = append(adjustments, &PayerTransaction{
 					CustomerID: adj.CustomerID,
 					Payer:      adj.Payer,
-					Points:     total - points,
+					Points:     -points,
 					Entered:    adj.Entered,
 				})
-				total += points - total
 			}
+		} else {
+			break
 		}
+		total += points
 	}
 	err = spendPoints(ctx, id, adjustments)
 	if err != nil {

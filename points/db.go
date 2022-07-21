@@ -39,7 +39,7 @@ func selectCustomerBalances(ctx context.Context, customer int) ([]*PayerTransact
 			rlog.Error("not able to scan row", "err", err)
 			return t, err
 		}
-		rlog.Info("found row", "row", t)
+		//rlog.Info("found row", "row", t)
 		t = append(t, &transaction)
 	}
 	return t, nil
@@ -74,24 +74,32 @@ func deleteTransaction(ctx context.Context, id int) error {
 }
 
 func spendPoints(ctx context.Context, id int, adjustments []*PayerTransaction) error {
-	tx, err := sqldb.Begin(ctx)
+	tx, err := sqldb.Begin(context.Background())
 	if err != nil {
+		rlog.Error("not able to create database transaction", "err", err)
 		return err
 	}
 	for _, adj := range adjustments {
+		rlog.Info("adjusting", "id", id, "amount", adj.Points, "payer", adj.CustomerID)
 		if adj.Points == 0 {
-			_, err = tx.Exec(ctx, `DELETE FROM transactions WHERE id = $1;`, adj.TransactionID)
+			result, err := tx.Exec(ctx, `DELETE FROM transactions WHERE id = $1;`, adj.TransactionID)
 			if err != nil {
 				rlog.Error("not able to delete row", "transaction_id", adj.TransactionID, "err", err)
 				return err
 			}
+			rlog.Info("affected rows", "rowcount", result.RowsAffected())
 		} else {
-			_, err := tx.Exec(ctx, `UPDATE transactions SET amount = (amount - $1) WHERE id = $2`, adj.Points, adj.TransactionID)
+			result, err := tx.Exec(ctx, `UPDATE transactions SET amount = (amount - $1) WHERE id = $2;`, int(adj.Points), adj.TransactionID)
 			if err != nil {
 				rlog.Error("unable to update balance for transaction", "transation_id", adj.TransactionID, "err", err)
 				return err
 			}
+			rlog.Info("affected rows", "rowcount", result.RowsAffected())
 		}
 	}
-	return tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		rlog.Error("error committing transaction", "err", err)
+	}
+	return err
 }
