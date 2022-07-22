@@ -72,6 +72,7 @@ func GetCustomerBalances(ctx context.Context, id int) (*CustomerTransactions, er
 func SpendCustomerPoints(ctx context.Context, id int, points int64) (*CustomerTransactions, error) {
 	transactions, err := selectCustomerBalances(ctx, id)
 	if err != nil {
+		rlog.Error("not able to select customer balances", "err", err)
 		return nil, err
 	}
 

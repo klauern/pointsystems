@@ -155,22 +155,6 @@ func Test_spendPoints(t *testing.T) {
 			},
 			wantErr: false,
 		},
-		{
-			name: "spend too much",
-			args: args{
-				ctx: context.Background(),
-				id:  1,
-				adjustments: []*PayerTransaction{
-					&PayerTransaction{
-						TransactionID: 5,
-						CustomerID:    1,
-						Points:        100000000,
-					},
-				},
-			},
-			// We don't actually check anything in the db.go file at this time, so we're relying on the check in the public method.
-			wantErr: false,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

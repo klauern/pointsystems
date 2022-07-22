@@ -49,7 +49,7 @@ func TestGetCustomerBalances(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		wantTotal int
+		wantTotal int64
 		wantErr   bool
 	}{
 		{
@@ -58,7 +58,7 @@ func TestGetCustomerBalances(t *testing.T) {
 				ctx: context.Background(),
 				id:  1,
 			},
-			wantTotal: 500,
+			wantTotal: int64(158200),
 			wantErr:   false,
 		},
 	}
@@ -92,7 +92,19 @@ func TestNewCustomer(t *testing.T) {
 		want    *Customer
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "bobarino",
+			args: args{
+				ctx:  context.Background(),
+				name: "bobarino",
+			},
+			want: &Customer{
+				Name:         "bobarino",
+				ID:           3,
+				TotalBalance: 0,
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -117,20 +129,42 @@ func TestSpendCustomerPoints(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *CustomerTransactions
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "spend a little",
+			args: args{
+				ctx:    context.Background(),
+				id:     1,
+				points: 50,
+			},
+			wantErr: false,
+		},
+		{
+			name: "spend a lot",
+			args: args{
+				ctx:    context.Background(),
+				id:     1,
+				points: 10000,
+			},
+			wantErr: false,
+		},
+		{
+			name: "spend too much",
+			args: args{
+				ctx:    context.Background(),
+				id:     1,
+				points: int64(150000),
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := SpendCustomerPoints(tt.args.ctx, tt.args.id, tt.args.points)
+			_, err := SpendCustomerPoints(tt.args.ctx, tt.args.id, tt.args.points)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SpendCustomerPoints() error = %v, wantErr %v", err, tt.wantErr)
 				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SpendCustomerPoints() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
